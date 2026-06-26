@@ -1,0 +1,14 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs / temp
+*.log
+.cache/
+tmp/
+
+# Local data exports (the live data lives in Google Sheets, not the repo)
+*.local.csv

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WC2026 Pool — Live Standings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <div class="banner">Live league standings · open on any device · updates a few minutes after scores are entered</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="kick">Draft Pool · Group Standings</div>
+      <div class="title">World Cup 2026</div>
+      <div class="sub">8-Player Snake Draft · 48 Nations</div>
+      <div class="badgebar">
+        <div class="bb-r">
+          <span class="live"><span class="pulse"></span>LIVE</span>
+          <div class="upd" id="upd">Loading…</div>
+        </div>
+      </div>
+      <div class="rule"></div>
+      <div class="rows" id="rows"></div>
+      <div class="foot">
+        <div class="legend">
+          <span><span class="swatch" style="background:linear-gradient(135deg,#FF2D87,#FF7A3D)"></span>1 pt per win · 0.5 per draw</span>
+          <span><span class="swatch" style="background:var(--var)"></span>strike = eliminated</span>
+        </div>
+        <div class="brand">World Cup Snake Draft</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load order matters: config + data define the globals app.js uses. -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

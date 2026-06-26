@@ -1,0 +1,9 @@
+# Cloudflare Pages headers (https://developers.cloudflare.com/pages/configuration/headers/)
+# Keep the HTML uncached so new score pushes show up promptly; the page also
+# cache-busts the CSV fetch itself with a timestamp query param.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/assets/*
+  Cache-Control: public, max-age=3600
