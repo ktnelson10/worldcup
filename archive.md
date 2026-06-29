@@ -24,6 +24,12 @@ keeps the feed a simple win/draw recorder and all pool logic in one editable obj
 The runner-up (7) is inferred as a team that won its semi (`sf`≥1) but is `OUT` with no
 final win.
 
+**Cache gotcha (fixed):** `_headers` caches `/assets/*` for 1h, and `index.html` loaded
+the scripts unversioned — so the new `app.js` didn't reach browsers after deploy (still
+showed 1 pt). Added `?v=2` to the three `<script>` tags in `index.html` (which is
+`no-cache`), forcing a fresh fetch. Bump the version on future asset-logic changes. Also
+refreshed the footer legend, which still read "1 pt per win."
+
 **Still on the commissioner (sheet-side, manual):**
 - The R32 team-picker dropdown is missing **South Africa** (a valid A2 qualifier) — needs
   adding to that column's data-validation list.
