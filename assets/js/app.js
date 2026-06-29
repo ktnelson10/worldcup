@@ -15,6 +15,47 @@
 let STATE = {};
 ROSTER.forEach(([p, ts]) => ts.forEach(t => STATE[p + "|" + t] = {gs: 0, r32: 0, r16: 0, qf: 0, sf: 0, fin: 0, out: false}));
 
+/*
+ * SCORING — how raw feed points become pool points.
+ *
+ * The scores feed (CSV) records the *raw result* of each round: group-stage
+ * points (1/win, 0.5/draw) and a flat 1 for each knockout win. The pool weights
+ * later rounds more heavily, so we scale those raw values here — the feed stays
+ * simple and all the pool-specific scoring lives in this one place.
+ *
+ *   Group win 1 (draw 0.5) · R32 2 · R16 3 · QF 4 · SF 5 · runner-up 7 · champion 10
+ *
+ * The final is asymmetric (the loser still scores), so it's handled in
+ * finalPoints() rather than as a simple multiplier. To retune the pool, edit
+ * the numbers below.
+ */
+const SCORING = {
+  roundWeight: {gs: 1, r32: 2, r16: 3, qf: 4, sf: 5}, // multiplied against raw feed points
+  champion: 10, // winning the final
+  runnerUp: 7   // reaching the final and losing it
+};
+
+// Points a team earns for the final: champion if it won, runner-up if it
+// reached the final (won its semi) but is now eliminated, otherwise none.
+function finalPoints(s) {
+  if (Number(s.fin || 0) >= 1) return SCORING.champion;
+  if (s.out && Number(s.sf || 0) >= 1) return SCORING.runnerUp;
+  return 0;
+}
+
+// Weighted per-round points for a single (player, team) state.
+function roundPoints(s) {
+  const w = SCORING.roundWeight;
+  return {
+    gs: Number(s.gs || 0) * w.gs,
+    r32: Number(s.r32 || 0) * w.r32,
+    r16: Number(s.r16 || 0) * w.r16,
+    qf: Number(s.qf || 0) * w.qf,
+    sf: Number(s.sf || 0) * w.sf,
+    fin: finalPoints(s)
+  };
+}
+
 // Render a circular flag emblem for a team as inline SVG.
 function svgEmblem(team, size) {
   const T = TEAMS[team] || ["", 'v', ['#888']];
@@ -50,7 +91,8 @@ function agg(p, ts) {
   let a = {gs: 0, r32: 0, r16: 0, qf: 0, sf: 0, fin: 0, total: 0, alive: 0};
   ts.forEach(t => {
     const s = STATE[p + "|" + t];
-    ROUNDS.forEach(([k]) => a[k] += Number(s[k] || 0));
+    const pts = roundPoints(s);
+    ROUNDS.forEach(([k]) => a[k] += pts[k]);
     if (!s.out) a.alive++;
   });
   a.total = ROUNDS.reduce((x, [k]) => x + a[k], 0);
@@ -75,7 +117,8 @@ function render() {
     let tiles = "";
     r.ts.forEach(t => {
       const s = STATE[r.p + "|" + t];
-      const tp = s.gs + s.r32 + s.r16 + s.qf + s.sf + s.fin;
+      const p = roundPoints(s);
+      const tp = p.gs + p.r32 + p.r16 + p.qf + p.sf + p.fin;
       const code = (TEAMS[t] || [t])[0];
       tiles += `<div class="tile ${s.out ? 'out' : ''}">${svgEmblem(t, 30)}<span class="tmeta"><span class="tcode">${code}</span><span class="tname">${t}</span></span><span class="tpts ${tp ? '' : 'z'}">${tp}</span></div>`;
     });

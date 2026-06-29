@@ -5,6 +5,33 @@ do, what changed, and anything worth remembering next time. Keep entries short.
 
 ---
 
+## 2026-06-28 — Escalating knockout scoring (in the page)
+
+**Goal:** R32 wins were only scoring 1 pt; pool wants later rounds to count more.
+
+**Did:**
+- Added a `SCORING` object + `roundPoints()` / `finalPoints()` helpers to `assets/js/app.js`
+  and routed `agg()` and the per-team tile total through them. Weights: GS 1 (draw 0.5),
+  R32 2, R16 3, QF 4, SF 5, final = 10 champion / 7 runner-up. `applyCSV` untouched.
+- Updated `README.md` + `CLAUDE.md` scoring sections.
+- Verified with a stubbed-DOM Node test (11 cases: per-round weights, champion, runner-up,
+  SF-loser, group unchanged, player aggregate).
+
+**Why in the page, not the sheet:** the scores sheet only has a single global
+"Points per WIN" setting, so it can't scale by round without a formula rewrite — and Google
+Sheets' canvas can't be driven reliably through the browser tools. Weighting in the page
+keeps the feed a simple win/draw recorder and all pool logic in one editable object.
+The runner-up (7) is inferred as a team that won its semi (`sf`≥1) but is `OUT` with no
+final win.
+
+**Still on the commissioner (sheet-side, manual):**
+- The R32 team-picker dropdown is missing **South Africa** (a valid A2 qualifier) — needs
+  adding to that column's data-validation list.
+- The sheet's own internal Leaderboard tab still shows flat 1/win; only the website applies
+  the weights.
+
+---
+
 ## 2026-06-26 — Repo foundation: modular restructure + docs
 
 **Goal:** Get the codebase into great shape. It had previously been a one-off spreadsheet

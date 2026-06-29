@@ -44,20 +44,25 @@ Google Sheets — but it helps to understand all of them.
 
 ## Scoring rules
 
-- **1 point** for a win, **0.5 points** for a draw (entered into the scores sheet per team).
-- Points are tracked **per round**, group stage through the final:
+Later rounds are worth more. The scores sheet records the **raw result** of each match
+(group: 1/win, 0.5/draw; each knockout win = a flat 1), and the **page applies the pool's
+point weights** (see `SCORING` in [`assets/js/app.js`](assets/js/app.js)):
 
-  | Column | Round            |
-  |--------|------------------|
-  | `gs`   | Group Stage      |
-  | `r32`  | Round of 32      |
-  | `r16`  | Round of 16      |
-  | `qf`   | Quarter-final    |
-  | `sf`   | Semi-final       |
-  | `fin`  | Final            |
+  | Column | Round         | Points                          |
+  |--------|---------------|---------------------------------|
+  | `gs`   | Group Stage   | **1** per win, **0.5** per draw |
+  | `r32`  | Round of 32   | **2** per win                   |
+  | `r16`  | Round of 16   | **3** per win                   |
+  | `qf`   | Quarter-final | **4** per win                   |
+  | `sf`   | Semi-final    | **5** per win                   |
+  | `fin`  | Final         | **10** champion · **7** runner-up |
 
+- The final is asymmetric — the losing finalist still scores 7. The page detects the
+  runner-up as a team that won its semi (`sf` ≥ 1) but is now `OUT` without a final win.
+- Keeping the weights in the page means the scores sheet stays a simple win/draw recorder;
+  to retune the pool, edit the `SCORING` object in `app.js` (one place).
 - A team marked `OUT` in the `status` column is shown struck-through. A player's score is
-  the sum of all their teams' points across every round.
+  the sum of all their teams' weighted points across every round.
 - **Ranking tiebreakers:** total points, then number of teams still alive, then name.
 
 ---

@@ -40,7 +40,10 @@ Header row, case-insensitive, any order: `owner, team, gs, r32, r16, qf, sf, fin
 
 - `owner` must exactly match a `ROSTER` name; `team` must exactly match a `TEAMS` key
   (mind exact spelling: `Bosnia & Herzegovina`, `Ivory Coast`, `DR Congo`).
-- `gs`..`fin` = numeric points per round (group stage → final). Scoring: 1/win, 0.5/draw.
+- `gs`..`fin` = raw per-round result from the feed (group: 1/win, 0.5/draw; each knockout
+  win = a flat 1). The page weights these into pool points via `SCORING` in `app.js`
+  (R32×2, R16×3, QF×4, SF×5, final = 10 champion / 7 runner-up). Keep the feed a simple
+  win/draw recorder and retune scoring in that one object.
 - `status` = `OUT` once eliminated (shown struck-through); anything else = alive.
 - Unknown `owner|team` rows are ignored.
 
