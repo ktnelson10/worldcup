@@ -62,9 +62,9 @@ font-family:'Anton','Poppins',sans-serif;font-size:clamp(24px,6.5vw,31px);backgr
 .brk.zero{opacity:.5}.bl{font-size:10px;letter-spacing:.06em;color:var(--fog)}
 .bv{font-family:'Anton','Poppins',sans-serif;font-size:clamp(18px,5vw,23px);line-height:1;margin-top:2px}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
-.tile{display:flex;align-items:center;gap:9px;padding:9px 10px;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:13px}
+.tile{display:flex;align-items:center;gap:9px;padding:9px 10px;min-width:0;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:13px}
 .emblem{flex-shrink:0;width:28px;height:28px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),0 1px 3px rgba(0,0,0,.4)}
-.tmeta{flex:1 1 auto;min-width:0;overflow:hidden}
+.tmeta{flex:1 1 auto;min-width:0;overflow:hidden;display:flex;flex-direction:column}
 .tcode{font-size:clamp(13px,3.6vw,16px);font-weight:800;letter-spacing:.02em}
 .tname{font-size:clamp(9px,2.6vw,10.5px);color:var(--fog);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .tpts{margin-left:auto;flex-shrink:0;font-weight:800;font-size:clamp(13px,3.6vw,16px);min-width:18px;text-align:center;
@@ -73,6 +73,7 @@ padding:3px 7px;border-radius:8px;background:rgba(255,194,75,.16);color:var(--go
 .tile.out{opacity:.42;position:relative;border-color:rgba(255,77,94,.35)}
 .tile.out .tcode,.tile.out .tname{text-decoration:line-through;text-decoration-color:var(--var);text-decoration-thickness:2px}
 .tile.out:after{content:"OUT";position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--var)}
+.tile.out .tpts{display:none} /* eliminated: show OUT tag instead of the score badge, so they don't collide */
 .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;font-size:12px;color:var(--fog);gap:10px;flex-wrap:wrap}
 .legend{display:flex;gap:16px;flex-wrap:wrap}.legend span{display:flex;align-items:center;gap:6px}
 .swatch{width:10px;height:10px;border-radius:50%}

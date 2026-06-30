@@ -5,6 +5,25 @@ do, what changed, and anything worth remembering next time. Keep entries short.
 
 ---
 
+## 2026-06-29 — Mobile tile overflow fix (restructure regression)
+
+**Symptom:** on phones, team tiles rendered code+name on one line ("MAR Morocco"),
+overflowing off-screen — names cut, point badges pushed out of view.
+
+**Cause:** `.tmeta` lost its vertical stacking in the modular restructure, so `.tcode` and
+`.tname` (plain inline spans) sat side by side instead of stacked. The live site had been
+running the *old single-file* index.html (Pages isn't linked to the repo, so the modular
+version only went live with the manual zip deploy on 2026-06-28 — that's when it surfaced).
+
+**Fix:** `assets/css/styles.css` — `.tmeta` → add `display:flex;flex-direction:column`
+(stacks code over name; `min-width:0` + `.tname` ellipsis already truncate). Bumped all
+asset cache-busters to `?v=3` (incl. the previously-unversioned `styles.css` link).
+
+**Couldn't pixel-verify** (no browser engine in sandbox; Claude-in-Chrome read/screenshot
+times out on document_idle for every page here). Verified by rule inspection only.
+
+---
+
 ## 2026-06-28 — Escalating knockout scoring (in the page)
 
 **Goal:** R32 wins were only scoring 1 pt; pool wants later rounds to count more.
