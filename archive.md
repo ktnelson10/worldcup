@@ -5,6 +5,20 @@ do, what changed, and anything worth remembering next time. Keep entries short.
 
 ---
 
+## 2026-07-02 — Eliminated tiles keep their score
+
+**Change:** eliminated (`OUT`) team tiles used to hide the score badge and show a red "OUT"
+tag. Now they keep the score badge in place, dulled (via existing `.tile.out{opacity:.42}`)
+with a red strikethrough — so you can still see the points that team banked toward the
+player's total. Removed the `:after "OUT"` label and the `.tpts{display:none}`; added
+`.tile.out .tpts` to the strikethrough selector. Assets bumped to `?v=5`.
+
+**Also:** confirmed Cloudflare→GitHub auto-deploy isn't possible on this project — Direct
+Upload projects can't convert to Git integration (would need a new Git-connected project or
+GitHub Actions). User chose to stay on manual zip upload for now.
+
+---
+
 ## 2026-06-29 — Mobile tile overflow fix (restructure regression)
 
 **Symptom:** on phones, team tiles rendered code+name on one line ("MAR Morocco"),
