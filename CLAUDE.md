@@ -27,12 +27,22 @@ The roster is hardcoded in the page; only **scores** come from the live feed.
 | Update rosters after a re-draft       | `assets/js/data.js` (`ROSTER`) |
 | Add/fix a nation's flag, code, colors | `assets/js/data.js` (`TEAMS`)  |
 | Change scoring/rendering logic        | `assets/js/app.js`             |
+| Update the knockout bracket seeding   | `assets/js/bracket.js` (`BRACKET32`) |
 | Restyle the card                      | `assets/css/styles.css`        |
 | Change page markup                    | `index.html`                   |
 
 `index.html` loads scripts in this order — **do not reorder**: `config.js` → `data.js` →
-`app.js`. They share globals via classic-script scope (`CONFIG`, `TEAMS`, `ROSTER`,
-`ROUNDS`), so `app.js` must load last.
+`bracket.js` → `app.js`. They share globals via classic-script scope (`CONFIG`, `TEAMS`,
+`ROSTER`, `ROUNDS`, `BRACKET32`), so `app.js` must load last.
+
+**PPR (bracket-aware):** `app.js` computes each player's Points Possible Remaining as the
+true max over the bracket via a tree DP (`computePPR`/`pprSolve`) — it respects that a
+player's own teams can collide and knock each other out, so it's not the naive per-team
+ceiling. Structure comes from `BRACKET32` (static seeding, tree order); alive/advanced
+status comes from the live feed (`STATE`), so it self-updates. This DP is also the intended
+engine for future win-% / "what-if" features (swap the max for a Monte-Carlo sim).
+
+⚠️ When cache-busting assets, bump the `?v=N` on **all four** script tags + the stylesheet.
 
 ## Data contract (CSV)
 

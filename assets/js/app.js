@@ -56,6 +56,103 @@ function roundPoints(s) {
   };
 }
 
+/*
+ * Points Possible Remaining (PPR) — bracket-aware.
+ *
+ * The naive ceiling (assume every surviving team wins out) overcounts, because
+ * a player's own teams can meet in the bracket and knock each other out. The
+ * real PPR is the MAX total remaining points a player can still earn given the
+ * actual bracket (BRACKET32) and current results (STATE): in every match one
+ * team advances, and when two of your teams collide only one path continues.
+ *
+ * We solve it with a tree DP over the bracket. Remaining points per round:
+ * R32 2, R16 3, QF 4, SF 5, and the final gives champion 10 / runner-up 7
+ * (the loser still scores). Matches already played contribute 0 (banked, not
+ * "remaining"); eliminated teams contribute 0.
+ */
+const KO_KEYS = ['r32', 'r16', 'qf', 'sf', 'fin'];      // round index 0..4
+
+// name -> owner (static, from the draft).
+const TEAM_OWNER = {};
+ROSTER.forEach(([p, ts]) => ts.forEach(t => TEAM_OWNER[t] = p));
+
+// Turn the flat BRACKET32 list into a nested binary tree by pairing upward.
+function buildBracketTree(list) {
+  let nodes = list.slice();
+  while (nodes.length > 1) {
+    const next = [];
+    for (let i = 0; i < nodes.length; i += 2) next.push([nodes[i], nodes[i + 1]]);
+    nodes = next;
+  }
+  return nodes[0];
+}
+const BRACKET_TREE = (typeof BRACKET32 !== 'undefined') ? buildBracketTree(BRACKET32) : null;
+
+function stByName(name) { return STATE[TEAM_OWNER[name] + "|" + name]; }
+function wonRound(name, idx) { const s = stByName(name); return !!(s && Number(s[KO_KEYS[idx]] || 0) >= 1); }
+function teamOut(name) { const s = stByName(name); return !!(s && s.out); }
+function leavesOf(node) { return (typeof node === 'string') ? [node] : leavesOf(node[0]).concat(leavesOf(node[1])); }
+
+// DP: returns {P, O} = max remaining points for `player` within this subtree,
+// given the team advancing out of this match is Player-owned (P) or Other (O).
+function pprSolve(node, roundIdx, player) {
+  const NEG = -Infinity, w = SCORING.roundWeight;
+  const own = t => (TEAM_OWNER[t] === player) ? 'P' : 'O';
+
+  // R32 match: children are team names.
+  if (typeof node[0] === 'string') {
+    const [a, b] = node, r = { P: NEG, O: NEG };
+    const decided = wonRound(a, 0) ? a : (wonRound(b, 0) ? b : null);
+    if (decided) { r[own(decided)] = 0; return r; }        // played -> winner banked
+    [a, b].forEach(t => {                                    // pending -> non-out team can win
+      if (!teamOut(t)) { const bonus = TEAM_OWNER[t] === player ? w.r32 : 0; r[own(t)] = Math.max(r[own(t)], bonus); }
+    });
+    return r;
+  }
+
+  const L = pprSolve(node[0], roundIdx - 1, player);
+  const R = pprSolve(node[1], roundIdx - 1, player);
+  const isFinal = roundIdx === 4;
+  const roundW = [w.r32, w.r16, w.qf, w.sf][roundIdx];
+  const winBonus = adv => adv === 'P' ? (isFinal ? SCORING.champion : roundW) : 0;
+  const loseBonus = lo => (isFinal && lo === 'P') ? SCORING.runnerUp : 0;
+  const bestFinite = xs => { const f = xs.filter(x => x > NEG); return f.length ? Math.max(...f) : NEG; };
+
+  const decided = leavesOf(node).find(t => wonRound(t, roundIdx));
+  if (decided) {                                            // this match already played
+    const winSide = leavesOf(node[0]).includes(decided) ? L : R;
+    const loseSide = winSide === L ? R : L;
+    const wo = own(decided), loserPts = bestFinite([loseSide.P, loseSide.O]);
+    const r = { P: NEG, O: NEG };
+    if (winSide[wo] > NEG && loserPts > NEG) r[wo] = winSide[wo] + loserPts;
+    return r;
+  }
+
+  const r = { P: NEG, O: NEG };                             // undecided -> pick the winner freely
+  ['P', 'O'].forEach(adv => {
+    let best = NEG;
+    [[L, R], [R, L]].forEach(([ws, ls]) => {
+      if (ws[adv] <= NEG) return;
+      const loserPts = bestFinite([
+        ls.P > NEG ? ls.P + loseBonus('P') : NEG,
+        ls.O > NEG ? ls.O + loseBonus('O') : NEG
+      ]);
+      if (loserPts <= NEG) return;
+      best = Math.max(best, ws[adv] + winBonus(adv) + loserPts);
+    });
+    r[adv] = best;
+  });
+  return r;
+}
+
+// Max remaining points a player can still earn across the whole bracket.
+function computePPR(player) {
+  if (!BRACKET_TREE) return 0;
+  const r = pprSolve(BRACKET_TREE, 4, player);
+  const v = Math.max(r.P, r.O);
+  return v > -Infinity ? v : 0;
+}
+
 // Render a circular flag emblem for a team as inline SVG.
 function svgEmblem(team, size) {
   const T = TEAMS[team] || ["", 'v', ['#888']];
@@ -88,13 +185,14 @@ function svgEmblem(team, size) {
 
 // Aggregate a player's totals across their teams.
 function agg(p, ts) {
-  let a = {gs: 0, r32: 0, r16: 0, qf: 0, sf: 0, fin: 0, total: 0, alive: 0};
+  let a = {gs: 0, r32: 0, r16: 0, qf: 0, sf: 0, fin: 0, total: 0, alive: 0, ppr: 0};
   ts.forEach(t => {
     const s = STATE[p + "|" + t];
     const pts = roundPoints(s);
     ROUNDS.forEach(([k]) => a[k] += pts[k]);
     if (!s.out) a.alive++;
   });
+  a.ppr = computePPR(p);
   a.total = ROUNDS.reduce((x, [k]) => x + a[k], 0);
   return a;
 }
@@ -124,7 +222,7 @@ function render() {
     });
     const d = document.createElement("div");
     d.className = "row" + (lead ? " lead" : "");
-    d.innerHTML = `<div class="rtop"><div class="rank ${cls}">${rk}</div><div class="who"><div class="pname">${r.p}</div><div class="psub">${lead ? '<span class="crown">◆ Pool Leader</span> · ' : ''}Teams alive <b>${r.a.alive}/6</b></div></div><div class="total"><div class="tv">${r.a.total}</div><div class="tl">PTS</div></div></div><div class="breaks">${brk}</div><div class="tiles">${tiles}</div>`;
+    d.innerHTML = `<div class="rtop"><div class="rank ${cls}">${rk}</div><div class="who"><div class="pname">${r.p}</div><div class="psub">${lead ? '<span class="crown">◆ Pool Leader</span> · ' : ''}Teams alive <b>${r.a.alive}/6</b> · <span title="Points Possible Remaining — the most you could still add if every surviving team won out">PPR <b>${r.a.ppr}</b></span></div></div><div class="total"><div class="tv">${r.a.total}</div><div class="tl">PTS</div></div></div><div class="breaks">${brk}</div><div class="tiles">${tiles}</div>`;
     rows.appendChild(d);
   });
 }

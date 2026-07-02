@@ -5,6 +5,44 @@ do, what changed, and anything worth remembering next time. Keep entries short.
 
 ---
 
+## 2026-07-02 — PPR made bracket-aware (real ceiling, not naive)
+
+**Problem:** the first PPR summed each surviving team's independent run to the title, which
+overcounts — a player's own teams can collide in the bracket and eliminate each other
+(e.g. Alain's Croatia & Spain meet in the R16; Zools' Argentina & Algeria in the QF).
+
+**Did:**
+- Added `assets/js/bracket.js` — `BRACKET32`, the 32 R32 participants in tree order
+  (adjacent pairs = R32 matches; pairing up rebuilds R16→QF→SF→Final). Transcribed from the
+  commissioner's bracket image. Static seeding only.
+- Rewrote PPR in `app.js` as a tree DP (`computePPR`/`pprSolve`): max total remaining points
+  a player can earn given collisions. Advanced/eliminated status read from the live feed
+  (`STATE`), so it self-updates. Round values R32 2/R16 3/QF 4/SF 5, final 10 champ / 7 r-up;
+  played matches contribute 0 (banked), out teams 0.
+- Load order now `config → data → bracket → app`; assets bumped to `?v=7`.
+
+**Verified:** Node test on the current bracket state matched hand calcs — Brian 22 (only
+Belgium alive), Zools 29, Alain 45, Tuna 52, Levi 55 (others 50/50/52, all sensible).
+
+**Note:** this DP is the foundation for the discussed win-% / "what-if" chatbot — same
+bracket, Monte-Carlo instead of max. A real chatbot also needs a Cloudflare Pages Function
+to hold an API key (a static page can't); the odds math itself can stay client-side.
+
+---
+
+## 2026-07-02 — PPR (Points Possible Remaining) stat on cards
+
+**Added:** each player card now shows **PPR** in the subline next to "Teams alive" — the
+max weighted points they could still add if every surviving team won out (R32 2, R16 3,
+QF 4, SF 5, champion 10). Deterministic ceiling, no simulation. `pprForTeam()` sums, per
+alive team, the weight of every knockout round it hasn't won yet; `agg()` aggregates into
+`a.ppr`. Shrinks automatically as teams are eliminated or advance. Assets → `?v=6`.
+Verified with a Node test (R32-not-played 24, won-R32 22, in-final 10, champion/out 0,
+player aggregate). Scoped to knockouts (group stage is over; remaining group games aren't
+derivable from the feed).
+
+---
+
 ## 2026-07-02 — Eliminated tiles keep their score
 
 **Change:** eliminated (`OUT`) team tiles used to hide the score badge and show a red "OUT"
